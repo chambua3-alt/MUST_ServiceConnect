@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Login | MUST ServiceConnect</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            MUST ServiceConnect
+        </div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="appointments.html">Appointments</a>
+            <a href="login.html">Login</a>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>Service Provider Login</h1>
+        <p>
+            Login to manage your assigned university services
+            and update their availability status.
+        </p>
+    </section>
+
+    <!-- Login Form -->
+    <section class="form-section">
+        <div class="form-container">
+            <div class="form-card">
+
+                <h2>Provider Login</h2>
+
+                <form id="login-form">
+
+                    <div class="form-group">
+                        <label for="provider-id">
+                            Provider ID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="provider-id"
+                            name="provider-id"
+                            placeholder="Enter your Provider ID"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="login-password"
+                            name="password"
+                            placeholder="Enter your password"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn">
+                        Login
+                    </button>
+
+                </form>
+
+                <div class="form-link">
+                    <p>
+                        Are you a service provider without an account?
+                        <a href="signup.html">
+                            Create Account
+                        </a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>
+            © 2026 MUST ServiceConnect |
+            Smart Service Availability & Appointment System
+        </p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Provider Dashboard | MUST ServiceConnect</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        MUST ServiceConnect
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="appointments.html">Appointments</a>
+        <a href="provider-dashboard.html">Dashboard</a>
+    </nav>
+
+</header>
+
+
+<section class="hero">
+
+    <h1>Provider Dashboard</h1>
+
+    <p>
+        Manage your assigned service and
+        availability status.
+    </p>
+
+</section>
+
+
+<section class="status-section">
+
+    <h2>Provider Information</h2>
+
+    <div class="status-container">
+
+        <div class="status-card">
+
+            <h3>Full Name</h3>
+
+            <p>
+                Provider information will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>Provider ID</h3>
+
+            <p>
+                Provider ID will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>Assigned Service</h3>
+
+            <p>
+                Assigned service will appear here.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="features">
+
+    <h2>Service Availability</h2>
+
+    <div class="feature-container">
+
+        <div class="feature-card">
+
+            <h3>Current Status</h3>
+
+            <p>
+                Current service status will appear here.
+            </p>
+
+            <span class="available">
+                Status
+            </span>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <h3>Location</h3>
+
+            <p>
+                Service location will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <h3>Working Hours</h3>
+
+            <p>
+                Working hours will appear here.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="form-section">
+
+    <div class="form-container">
+
+        <div class="form-card">
+
+            <h2>Update Availability</h2>
+
+            <form id="provider-status-form">
+
+                <div class="form-group">
+
+                    <label for="provider-status">
+                        Service Status
+                    </label>
+
+                    <select
+                        id="provider-status"
+                        name="provider-status"
+                        required
+                    >
+
+                        <option value="">
+                            Select status
+                        </option>
+
+                        <option value="available">
+                            Available
+                        </option>
+
+                        <option value="busy">
+                            Busy
+                        </option>
+
+                        <option value="closed">
+                            Closed
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn"
+                >
+                    Update Status
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<footer>
+
+    <p>
+        © 2026 MUST ServiceConnect |
+        Smart Service Availability & Appointment System
+    </p>
+
+</footer>
+
+
+<script src="js/script.js"></script>
+
+</body>
+
+</html>
