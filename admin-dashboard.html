@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Administrator Dashboard | MUST ServiceConnect</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        MUST ServiceConnect
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="appointments.html">Appointments</a>
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="login.html">Logout</a>
+    </nav>
+
+</header>
+
+
+<!-- Dashboard Hero -->
+
+<section class="hero">
+
+    <h1>
+        Administrator Dashboard
+    </h1>
+
+    <p>
+        Manage users, service categories,
+        services and system information.
+    </p>
+
+</section>
+
+
+<!-- Administrator Information -->
+
+<section class="status-section">
+
+    <h2>
+        Administrator Information
+    </h2>
+
+    <div class="status-container">
+
+        <div class="status-card">
+
+            <h3>
+                Administrator Name
+            </h3>
+
+            <p id="admin-name">
+                Administrator information will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>
+                Administrator ID
+            </h3>
+
+            <p id="admin-id">
+                Administrator ID will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>
+                Role
+            </h3>
+
+            <p>
+                Administrator
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- User Management -->
+
+<section class="features">
+
+    <h2>
+        User Management
+    </h2>
+
+    <div class="table-container">
+
+        <div style="
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        ">
+
+            <a
+                href="signup.html"
+                class="btn">
+
+                Create User
+
+            </a>
+
+        </div>
+
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        User ID
+                    </th>
+
+                    <th>
+                        Full Name
+                    </th>
+
+                    <th>
+                        Email
+                    </th>
+
+                    <th>
+                        Phone
+                    </th>
+
+                    <th>
+                        Role
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="admin-users">
+
+                <tr>
+
+                    <td colspan="7"
+                        style="text-align: center;">
+
+                        No user data available
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- Service Category Management -->
+
+<section class="status-section">
+
+    <h2>
+        Service Category Management
+    </h2>
+
+
+    <div class="table-container">
+
+        <div style="
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        ">
+
+            <button
+                type="button"
+                class="btn"
+                id="create-category-btn">
+
+                Create Category
+
+            </button>
+
+        </div>
+
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Category ID
+                    </th>
+
+                    <th>
+                        Category Name
+                    </th>
+
+                    <th>
+                        Description
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="admin-categories">
+
+                <tr>
+
+                    <td colspan="5"
+                        style="text-align: center;">
+
+                        No category data available
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- System Reports -->
+
+<section class="status-section">
+
+    <h2>
+        System Reports
+    </h2>
+
+    <div class="table-container">
+
+        <div class="dashboard-actions">
+
+            <!-- View Reports -->
+
+            <button
+                type="button"
+                class="btn"
+                id="view-reports-btn">
+
+                View System Reports
+
+            </button>
+
+
+            <!-- PDF -->
+
+            <button
+                type="button"
+                class="btn"
+                id="admin-download-pdf-btn">
+
+                Download PDF
+
+            </button>
+
+
+            <!-- Excel -->
+
+            <button
+                type="button"
+                class="btn"
+                id="admin-download-excel-btn">
+
+                Download Excel
+
+            </button>
+
+        </div>
+
+
+        <!-- Reports Table -->
+
+        <div style="
+            overflow-x: auto;
+            margin-top: 30px;
+        ">
+
+            <table class="dashboard-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Report
+                        </th>
+
+                        <th>
+                            Description
+                        </th>
+
+                        <th>
+                            Records
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="admin-reports">
+
+                    <tr>
+
+                        <td>
+                            Users Report
+                        </td>
+
+                        <td>
+                            System users and their account information.
+                        </td>
+
+                        <td>
+                            —
+                        </td>
+
+                        <td>
+                            <span class="dashboard-status available">
+                                Ready
+                            </span>
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>
+                            Services Report
+                        </td>
+
+                        <td>
+                            Service categories and available services.
+                        </td>
+
+                        <td>
+                            —
+                        </td>
+
+                        <td>
+                            <span class="dashboard-status available">
+                                Ready
+                            </span>
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>
+                            Appointments Report
+                        </td>
+
+                        <td>
+                            Appointment requests and their current status.
+                        </td>
+
+                        <td>
+                            —
+                        </td>
+
+                        <td>
+                            <span class="dashboard-status available">
+                                Ready
+                            </span>
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- Footer -->
+
+<footer>
+
+    <p>
+        © 2026 MUST ServiceConnect |
+        Smart Service Availability & Appointment System
+    </p>
+
+</footer>
+
+<!-- Reusable CRUD Modal -->
+
+<div id="crud-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modal-title">Action</h2>
+
+            <button
+                type="button"
+                id="modal-close"
+                class="modal-close"
+                aria-label="Close modal">
+                &times;
+            </button>
+
+        </div>
+
+        <form id="modal-form" class="modal-form">
+
+            <div id="modal-fields"></div>
+
+            <div
+                id="modal-message"
+                class="modal-message">
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="modal-cancel"
+                    class="modal-btn modal-btn-cancel">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="modal-confirm"
+                    class="modal-btn modal-btn-confirm">
+                    Confirm
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="js/script.js"></script>
+
+</body>
+
+
+
+</html>

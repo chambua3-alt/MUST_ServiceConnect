@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Dashboard | MUST ServiceConnect</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+
+        <div class="logo">
+            MUST ServiceConnect
+        </div>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="appointments.html">Appointments</a>
+            <a href="student-dashboard.html">Dashboard</a>
+            <a href="login.html">Logout</a>
+        </nav>
+
+    </header>
+
+
+    <!-- Dashboard Hero -->
+    <section class="hero">
+
+        <h1>
+            Student Dashboard
+        </h1>
+
+        <p>
+            Manage your university services and appointments.
+        </p>
+
+    </section>
+
+
+    <!-- Student Information -->
+    <section class="status-section">
+
+        <h2>
+            Student Information
+        </h2>
+
+        <div class="status-container">
+
+            <div class="status-card">
+
+                <h3>
+                    Student Name
+                </h3>
+
+                <p id="student-name">
+                    Student Name
+                </p>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <h3>
+                    Student ID
+                </h3>
+
+                <p id="student-id">
+                    Student ID
+                </p>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <h3>
+                    Email
+                </h3>
+
+                <p id="student-email">
+                    student@example.com
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Student Actions -->
+    <section class="features">
+
+        <h2>
+            Student Actions
+        </h2>
+
+        <div class="feature-container">
+
+            <!-- View Services -->
+            <div class="feature-card">
+
+                <h3>
+                    View Services
+                </h3>
+
+                <p>
+                    View university services and their current availability.
+                </p>
+
+                <a href="services.html" class="btn">
+                    View Services
+                </a>
+
+            </div>
+
+
+            <!-- Search Services -->
+            <div class="feature-card">
+
+                <h3>
+                    Search Services
+                </h3>
+
+                <p>
+                    Search for a specific university service.
+                </p>
+
+                <a href="services.html" class="btn">
+                    Search Services
+                </a>
+
+            </div>
+
+
+            <!-- Service Details -->
+            <div class="feature-card">
+
+                <h3>
+                    Service Details
+                </h3>
+
+                <p>
+                    View details about service providers, locations and availability.
+                </p>
+
+                <a href="services.html" class="btn">
+                    View Details
+                </a>
+
+            </div>
+
+
+            <!-- Create Appointment -->
+            <div class="feature-card">
+
+                <h3>
+                    Create Appointment
+                </h3>
+
+                <p>
+                    Request an appointment with a university service provider.
+                </p>
+
+                <a href="appointments.html" class="btn">
+                    Create Appointment
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- My Appointments -->
+
+<section class="status-section">
+
+    <h2>
+        My Appointments
+    </h2>
+
+    <div class="table-container">
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Service
+                    </th>
+
+                    <th>
+                        Provider
+                    </th>
+
+                    <th>
+                        Reason
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="student-appointments">
+
+                <tr>
+
+                    <td colspan="5"
+                        style="text-align: center;">
+
+                        No appointment data available
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- Appointment Reports -->
+
+<section class="features">
+
+    <h2>
+        Appointment Reports
+    </h2>
+
+    <div class="feature-container">
+
+        <!-- PDF -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download PDF
+            </h3>
+
+            <p>
+                Download your appointment information as a PDF document.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="download-pdf-btn">
+
+                Download PDF
+
+            </button>
+
+        </div>
+
+
+        <!-- Excel -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download Excel
+            </h3>
+
+            <p>
+                Download your appointment information as an Excel spreadsheet.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="download-excel-btn">
+
+                Download Excel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 MUST ServiceConnect |
+            Smart Service Availability & Appointment System
+        </p>
+
+    </footer>
+
+
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>

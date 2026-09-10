@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Service Manager Dashboard | MUST ServiceConnect</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        MUST ServiceConnect
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="appointments.html">Appointments</a>
+        <a href="service-manager-dashboard.html">Dashboard</a>
+        <a href="login.html">Logout</a>
+    </nav>
+
+</header>
+
+
+<!-- Dashboard Hero -->
+
+<section class="hero">
+
+    <h1>
+        Service Manager Dashboard
+    </h1>
+
+    <p>
+        Manage university services, service providers
+        and service availability.
+    </p>
+
+</section>
+
+
+<!-- Service Manager Information -->
+
+<section class="status-section">
+
+    <h2>
+        Service Manager Information
+    </h2>
+
+    <div class="status-container">
+
+        <div class="status-card">
+
+            <h3>
+                Full Name
+            </h3>
+
+            <p id="manager-name">
+                Service Manager information will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>
+                User ID
+            </h3>
+
+            <p id="manager-id">
+                Service Manager ID will appear here.
+            </p>
+
+        </div>
+
+
+        <div class="status-card">
+
+            <h3>
+                Role
+            </h3>
+
+            <p>
+                Service Manager
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- Service Management -->
+
+<section class="status-section">
+
+    <h2>
+        Service Management
+    </h2>
+
+    <div class="table-container">
+
+        <div style="
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        ">
+
+            <button
+                type="button"
+                class="btn"
+                id="create-service-btn">
+
+                Create Service
+
+            </button>
+
+        </div>
+
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Service
+                    </th>
+
+                    <th>
+                        Category
+                    </th>
+
+                    <th>
+                        Location
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Assigned Provider
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="managed-services">
+
+                <tr>
+
+                    <td colspan="6"
+                        style="text-align: center;">
+
+                        No service data available
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+
+<!-- Provider Assignment -->
+
+<section class="status-section">
+
+    <h2>
+        Provider Assignment
+    </h2>
+
+    <div class="table-container">
+
+        <div style="
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        ">
+
+            <button
+                type="button"
+                class="btn"
+                id="assign-provider-btn">
+
+                Assign Provider
+
+            </button>
+
+        </div>
+
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Provider
+                    </th>
+
+                    <th>
+                        Provider ID
+                    </th>
+
+                    <th>
+                        Service
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="assigned-providers">
+
+                <tr>
+
+                    <td colspan="5"
+                        style="text-align: center;">
+
+                        No provider assignment data available
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- Export -->
+
+<section class="features">
+
+    <h2>
+        Service Reports
+    </h2>
+
+    <div class="feature-container">
+
+
+        <!-- PDF -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download PDF
+            </h3>
+
+            <p>
+                Download service management information as a PDF document.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="manager-download-pdf-btn">
+
+                Download PDF
+
+            </button>
+
+        </div>
+
+
+        <!-- Excel -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download Excel
+            </h3>
+
+            <p>
+                Download service management information as an Excel spreadsheet.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="manager-download-excel-btn">
+
+                Download Excel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- Footer -->
+
+<footer>
+
+    <p>
+        © 2026 MUST ServiceConnect |
+        Smart Service Availability & Appointment System
+    </p>
+
+</footer>
+
+
+<!-- Reusable CRUD Modal -->
+
+<div id="crud-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modal-title">Action</h2>
+
+            <button
+                type="button"
+                id="modal-close"
+                class="modal-close"
+                aria-label="Close modal">
+                &times;
+            </button>
+
+        </div>
+
+        <form id="modal-form" class="modal-form">
+
+            <div id="modal-fields"></div>
+
+            <div
+                id="modal-message"
+                class="modal-message">
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="modal-cancel"
+                    class="modal-btn modal-btn-cancel">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="modal-confirm"
+                    class="modal-btn modal-btn-confirm">
+                    Confirm
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>

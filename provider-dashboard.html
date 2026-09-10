@@ -27,34 +27,45 @@
         <a href="services.html">Services</a>
         <a href="appointments.html">Appointments</a>
         <a href="provider-dashboard.html">Dashboard</a>
+        <a href="login.html">Logout</a>
     </nav>
 
 </header>
 
 
+<!-- Dashboard Hero -->
+
 <section class="hero">
 
-    <h1>Provider Dashboard</h1>
+    <h1>
+        Provider Dashboard
+    </h1>
 
     <p>
-        Manage your assigned service and
-        availability status.
+        Manage your assigned service, availability
+        and student appointments.
     </p>
 
 </section>
 
 
+<!-- Provider Information -->
+
 <section class="status-section">
 
-    <h2>Provider Information</h2>
+    <h2>
+        Provider Information
+    </h2>
 
     <div class="status-container">
 
         <div class="status-card">
 
-            <h3>Full Name</h3>
+            <h3>
+                Full Name
+            </h3>
 
-            <p>
+            <p id="provider-name">
                 Provider information will appear here.
             </p>
 
@@ -63,9 +74,11 @@
 
         <div class="status-card">
 
-            <h3>Provider ID</h3>
+            <h3>
+                Provider ID
+            </h3>
 
-            <p>
+            <p id="provider-id">
                 Provider ID will appear here.
             </p>
 
@@ -74,9 +87,11 @@
 
         <div class="status-card">
 
-            <h3>Assigned Service</h3>
+            <h3>
+                Assigned Service
+            </h3>
 
-            <p>
+            <p id="assigned-service">
                 Assigned service will appear here.
             </p>
 
@@ -87,32 +102,36 @@
 </section>
 
 
+<!-- Service Availability -->
+
 <section class="features">
 
-    <h2>Service Availability</h2>
+    <h2>
+        Service Availability
+    </h2>
 
     <div class="feature-container">
 
         <div class="feature-card">
 
-            <h3>Current Status</h3>
+            <h3>
+                Current Status
+            </h3>
 
-            <p>
-                Current service status will appear here.
-            </p>
+            <div id="current-provider-status"
+                 class="dashboard-status pending">
 
-            <span class="available">
-                Status
-            </span>
+                Status Not Set
 
-        </div>
-
+            </div>
 
         <div class="feature-card">
 
-            <h3>Location</h3>
+            <h3>
+                Location
+            </h3>
 
-            <p>
+            <p id="provider-location">
                 Service location will appear here.
             </p>
 
@@ -121,9 +140,11 @@
 
         <div class="feature-card">
 
-            <h3>Working Hours</h3>
+            <h3>
+                Working Hours
+            </h3>
 
-            <p>
+            <p id="provider-working-hours">
                 Working hours will appear here.
             </p>
 
@@ -134,15 +155,155 @@
 </section>
 
 
+<!-- Provider Actions -->
+
+<section class="features">
+
+    <h2>
+        Provider Actions
+    </h2>
+
+    <div class="feature-container">
+
+
+        <!-- View Assigned Service -->
+
+        <div class="feature-card">
+
+            <h3>
+                View Assigned Service
+            </h3>
+
+            <p>
+                View the service currently assigned to your provider account.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="view-assigned-service-btn">
+
+                View Service
+
+            </button>
+
+        </div>
+
+
+        <!-- View Appointments -->
+
+        <div class="feature-card">
+
+            <h3>
+                View Appointments
+            </h3>
+
+            <p>
+                View appointments requested by students for your service.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="view-provider-appointments-btn">
+
+                View Appointments
+
+            </button>
+
+        </div>
+
+
+        <!-- Update Availability -->
+
+        <div class="feature-card">
+
+            <h3>
+                Update Availability
+            </h3>
+
+            <p>
+                Change your current service availability status.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="update-availability-btn">
+
+                Update Availability
+
+            </button>
+
+        </div>
+
+
+        <!-- PDF -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download PDF
+            </h3>
+
+            <p>
+                Download your appointment information as a PDF document.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="provider-download-pdf-btn">
+
+                Download PDF
+
+            </button>
+
+        </div>
+
+
+        <!-- Excel -->
+
+        <div class="feature-card">
+
+            <h3>
+                Download Excel
+            </h3>
+
+            <p>
+                Download your appointment information as an Excel spreadsheet.
+            </p>
+
+            <button
+                type="button"
+                class="btn"
+                id="provider-download-excel-btn">
+
+                Download Excel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- Update Availability Form -->
+
 <section class="form-section">
 
     <div class="form-container">
 
         <div class="form-card">
 
-            <h2>Update Availability</h2>
+            <h2>
+                Update Availability
+            </h2>
 
             <form id="provider-status-form">
+
 
                 <div class="form-group">
 
@@ -192,6 +353,148 @@
 
 </section>
 
+
+<!-- Provider Appointments -->
+
+<section class="status-section">
+
+    <h2>
+        Student Appointments
+    </h2>
+
+    <div class="table-container">
+
+        <table class="service-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student
+                    </th>
+
+                    <th>
+                        Service
+                    </th>
+
+                    <th>
+                        Reason
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="provider-appointments">
+
+                <tr>
+
+                    <td>
+                        No appointment data available
+                    </td>
+
+                    <td>
+                        -
+                    </td>
+
+                    <td>
+                        -
+                    </td>
+
+                    <td>
+                        -
+                    </td>
+
+                    <td>
+                        -
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- Appointment Status -->
+
+<section class="form-section">
+
+    <div class="form-container">
+
+        <div class="form-card">
+
+            <h2>
+                Update Appointment Status
+            </h2>
+
+            <form id="provider-appointment-status-form">
+
+
+                <div class="form-group">
+
+                    <label for="appointment-status">
+                        Appointment Status
+                    </label>
+
+                    <select
+                        id="appointment-status"
+                        name="appointment-status"
+                        required
+                    >
+
+                        <option value="">
+                            Select status
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                        <option value="completed">
+                            Completed
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn"
+                >
+                    Update Appointment
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- Footer -->
 
 <footer>
 
