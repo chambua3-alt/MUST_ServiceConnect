@@ -1,7 +1,7 @@
 /* Backend API */
 
 const API_BASE_URL =
-    "http://127.0.0.1:5000";
+    "https://must-serviceconnect-backend.onrender.com";
 
 const browserFetch =
     window.fetch.bind(window);
@@ -6721,7 +6721,7 @@ if (loginForm && loginMessage) {
 
             try {
 
-            const response = await fetch("http://127.0.0.1:5000/api/auth/login", {
+            const response = await fetch("https://must-serviceconnect-backend.onrender.com/api/auth/login", {
                 method: "POST",
 
                 headers: {
