@@ -189,7 +189,7 @@ async function downloadAppointmentReportPDF(
             "Phone",
             "Email",
             "Service",
-            "Provider ID",
+                "Provider",
             "Date",
             "Time",
             "Status",
@@ -207,7 +207,7 @@ async function downloadAppointmentReportPDF(
                         appointment.phone,
                         appointment.email,
                         appointment.service_name,
-                        appointment.provider_id,
+                        appointment.provider_name,
                         appointment.appointment_date,
                         appointment.appointment_time,
                         appointment.status,
@@ -468,6 +468,24 @@ async function downloadServiceReportExcel(
 
 /* Download System Report PDF */
 
+async function getSystemReport(
+    req,
+    res
+) {
+
+    try {
+        res.status(200).json(
+            await getSystemReportData()
+        );
+    } catch (error) {
+        console.error("System report data error:", error.message);
+        res.status(500).json({
+            message: "Failed to retrieve system report data."
+        });
+    }
+
+}
+
 async function downloadSystemReportPDF(
     req,
     res
@@ -654,6 +672,7 @@ async function getStudentAppointmentReportData(
             a.email,
             s.name AS service_name,
             p.provider_id,
+            u.full_name AS provider_name,
             a.appointment_date,
             a.appointment_time,
             a.status,
@@ -663,6 +682,8 @@ async function getStudentAppointmentReportData(
             ON a.service_id = s.id
         INNER JOIN providers p
             ON a.provider_id = p.id
+        INNER JOIN users u
+            ON u.id = p.user_id
         WHERE a.user_id = $1
         ORDER BY
             a.appointment_date DESC,
@@ -762,7 +783,7 @@ async function downloadStudentAppointmentReportPDF(
             "Phone",
             "Email",
             "Service",
-            "Provider ID",
+            "Provider",
             "Date",
             "Time",
             "Status",
@@ -780,7 +801,7 @@ async function downloadStudentAppointmentReportPDF(
                         appointment.phone,
                         appointment.email,
                         appointment.service_name,
-                        appointment.provider_id,
+                        appointment.provider_name,
                         appointment.appointment_date,
                         appointment.appointment_time,
                         appointment.status,
@@ -1057,6 +1078,7 @@ async function downloadProviderAppointmentReportExcel(
 }
 
 module.exports = {
+    getSystemReport,
     downloadAppointmentReportPDF,
     downloadAppointmentReportExcel,
 

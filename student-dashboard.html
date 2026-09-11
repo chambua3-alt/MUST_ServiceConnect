@@ -8,6 +8,7 @@
     <title>Student Dashboard | MUST ServiceConnect</title>
 
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="images/logo.png">
 </head>
 
 <body>
@@ -210,6 +211,14 @@
                     </th>
 
                     <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Assigned Time
+                    </th>
+
+                    <th>
                         Status
                     </th>
 
@@ -226,7 +235,7 @@
 
                 <tr>
 
-                    <td colspan="5"
+                    <td colspan="7"
                         style="text-align: center;">
 
                         No appointment data available
@@ -314,6 +323,60 @@
         </p>
 
     </footer>
+
+
+    <!-- Student Appointment Edit Modal -->
+
+    <div id="crud-modal" class="modal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2 id="modal-title">Update Appointment</h2>
+
+                <button
+                    type="button"
+                    id="modal-close"
+                    class="modal-close"
+                    aria-label="Close appointment editor">
+                    &times;
+                </button>
+
+            </div>
+
+            <form id="modal-form" class="modal-form">
+
+                <div id="modal-fields"></div>
+
+                <div
+                    id="modal-message"
+                    class="modal-message">
+                </div>
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        id="modal-cancel"
+                        class="modal-btn modal-btn-cancel">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        id="modal-confirm"
+                        class="modal-btn modal-btn-confirm">
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
 
 
     <script src="js/script.js"></script>

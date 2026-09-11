@@ -91,175 +91,158 @@ function generatePDF(
         document.page.margins.left -
         document.page.margins.right;
 
-    const columnWidth =
-        pageWidth / columns.length;
+    const cellPadding = 5;
+    const bodyFontSize = 7;
+    const headerFontSize = 8;
+    const minimumRowHeight = 24;
 
-    const rowHeight = 25;
+    const values = rows.map(function (row) {
+        return row.map(function (value) {
+            return value === null || value === undefined
+                ? ""
+                : String(value);
+        });
+    });
 
-    let currentY =
-        document.y;
+    const preferredWidths = columns.map(function (column, index) {
 
+        const longestValue = Math.max(
+            String(column).length,
+            ...values.map(function (row) {
+                return (row[index] || "").length;
+            })
+        );
 
-    /* Table Header */
+        return Math.min(
+            220,
+            Math.max(48, longestValue * 4.2 + cellPadding * 2)
+        );
 
-    document
-        .font("Helvetica-Bold")
-        .fontSize(9);
+    });
 
+    const preferredTotal = preferredWidths.reduce(
+        function (total, width) {
+            return total + width;
+        },
+        0
+    );
 
-    columns.forEach(
-        function (column, index) {
+    const scale = pageWidth / preferredTotal;
 
-            const x =
-                document.page.margins.left +
-                (index * columnWidth);
+    const columnWidths = preferredWidths.map(function (width) {
+        return scale < 1
+            ? width * scale
+            : width + ((pageWidth - preferredTotal) / columns.length);
+    });
 
+    function drawHeader(y) {
 
-            document
-                .rect(
-                    x,
-                    currentY,
-                    columnWidth,
-                    rowHeight
-                )
-                .stroke();
+        document
+            .font("Helvetica-Bold")
+            .fontSize(headerFontSize);
 
+        let x = document.page.margins.left;
+        let headerHeight = 24;
+
+        columns.forEach(function (column, index) {
+            headerHeight = Math.max(
+                headerHeight,
+                document.heightOfString(
+                    String(column),
+                    {
+                        width: columnWidths[index] - cellPadding * 2,
+                        lineGap: 1
+                    }
+                ) + cellPadding * 2
+            );
+        });
+
+        columns.forEach(function (column, index) {
+            document.rect(
+                x,
+                y,
+                columnWidths[index],
+                headerHeight
+            ).stroke();
 
             document.text(
                 String(column),
-                x + 5,
-                currentY + 8,
+                x + cellPadding,
+                y + cellPadding,
                 {
-                    width:
-                        columnWidth - 10,
-                    height:
-                        rowHeight - 10,
-                    ellipsis: true
+                    width: columnWidths[index] - cellPadding * 2,
+                    height: headerHeight - cellPadding * 2,
+                    lineGap: 1
                 }
             );
 
-        }
-    );
+            x += columnWidths[index];
+        });
 
+        return headerHeight;
 
-    currentY += rowHeight;
+    }
 
-
-    /* Table Rows */
+    let currentY = document.y;
+    currentY += drawHeader(currentY);
 
     document
         .font("Helvetica")
-        .fontSize(8);
+        .fontSize(bodyFontSize);
 
+    values.forEach(function (row) {
 
-    rows.forEach(
-        function (row) {
-
-            /* New Page */
-
-            if (
-                currentY + rowHeight >
-                document.page.height -
-                document.page.margins.bottom
-            ) {
-
-                document.addPage();
-
-                currentY =
-                    document.page.margins.top;
-
-                document
-                    .font("Helvetica-Bold")
-                    .fontSize(9);
-
-
-                columns.forEach(
-                    function (column, index) {
-
-                        const x =
-                            document.page.margins.left +
-                            (index * columnWidth);
-
-
-                        document
-                            .rect(
-                                x,
-                                currentY,
-                                columnWidth,
-                                rowHeight
-                            )
-                            .stroke();
-
-
-                        document.text(
-                            String(column),
-                            x + 5,
-                            currentY + 8,
-                            {
-                                width:
-                                    columnWidth - 10,
-                                height:
-                                    rowHeight - 10,
-                                ellipsis: true
-                            }
-                        );
-
+        const rowHeight = Math.max(
+            minimumRowHeight,
+            ...row.map(function (value, index) {
+                return document.heightOfString(
+                    value,
+                    {
+                        width: columnWidths[index] - cellPadding * 2,
+                        lineGap: 1
                     }
-                );
+                ) + cellPadding * 2;
+            })
+        );
 
+        if (
+            currentY + rowHeight >
+            document.page.height - document.page.margins.bottom
+        ) {
+            document.addPage();
+            currentY = document.page.margins.top;
+            currentY += drawHeader(currentY);
+            document.font("Helvetica").fontSize(bodyFontSize);
+        }
 
-                currentY += rowHeight;
+        let x = document.page.margins.left;
 
+        row.forEach(function (value, index) {
 
-                document
-                    .font("Helvetica")
-                    .fontSize(8);
+            document.rect(
+                x,
+                currentY,
+                columnWidths[index],
+                rowHeight
+            ).stroke();
 
-            }
-
-
-            row.forEach(
-                function (value, index) {
-
-                    const x =
-                        document.page.margins.left +
-                        (index * columnWidth);
-
-
-                    document
-                        .rect(
-                            x,
-                            currentY,
-                            columnWidth,
-                            rowHeight
-                        )
-                        .stroke();
-
-
-                    document.text(
-                        value === null ||
-                        value === undefined
-                            ? ""
-                            : String(value),
-                        x + 5,
-                        currentY + 8,
-                        {
-                            width:
-                                columnWidth - 10,
-                            height:
-                                rowHeight - 10,
-                            ellipsis: true
-                        }
-                    );
-
+            document.text(
+                value,
+                x + cellPadding,
+                currentY + cellPadding,
+                {
+                    width: columnWidths[index] - cellPadding * 2,
+                    height: rowHeight - cellPadding * 2,
+                    lineGap: 1
                 }
             );
 
+            x += columnWidths[index];
+        });
 
-            currentY += rowHeight;
+        currentY += rowHeight;
 
-        }
-    );
+    });
 
 
     /* Finish PDF */

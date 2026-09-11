@@ -6,6 +6,9 @@ info:
 http:
   method: POST
   url: http://localhost:5000/api/auth/login
+  body:
+    type: json
+    data: ""
   auth: inherit
 
 settings:

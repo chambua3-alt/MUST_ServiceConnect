@@ -1,5 +1,94 @@
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+
+
+/* Public Student Registration */
+
+async function registerStudent(req, res) {
+
+    try {
+
+        const {
+            user_id,
+            full_name,
+            email,
+            phone,
+            password
+        } = req.body;
+
+        if (
+            !user_id ||
+            !/^\d{14}$/.test(String(user_id).trim()) ||
+            !full_name ||
+            !String(full_name).trim() ||
+            !email ||
+            !String(email).trim() ||
+            !password
+        ) {
+            return res.status(400).json({
+                message:
+                    "Student ID, full name, email and password are required."
+            });
+        }
+
+        if (String(password).length < 6) {
+            return res.status(400).json({
+                message:
+                    "Password must contain at least 6 characters."
+            });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12);
+
+        const result = await pool.query(
+            `
+            INSERT INTO users
+                (user_id, full_name, email, phone, password_hash, role)
+            VALUES
+                ($1, $2, $3, $4, $5, 'student')
+            RETURNING
+                id,
+                user_id,
+                full_name,
+                email,
+                phone,
+                role,
+                is_active,
+                created_at,
+                updated_at
+            `,
+            [
+                String(user_id).trim(),
+                String(full_name).trim(),
+                String(email).trim().toLowerCase(),
+                phone ? String(phone).trim() : null,
+                passwordHash
+            ]
+        );
+
+        res.status(201).json({
+            message: "Student account created successfully.",
+            user: result.rows[0]
+        });
+
+    } catch (error) {
+
+        console.error("Student registration error:", error.message);
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message:
+                    "A user with that Student ID or email already exists."
+            });
+        }
+
+        res.status(500).json({
+            message: "Failed to create student account."
+        });
+    }
+
+}
 
 
 /* Login User */
@@ -90,15 +179,12 @@ async function loginUser(req, res) {
         }
 
 
-        /* Verify PostgreSQL crypt() hashes, including bcrypt hashes. */
+        /* Verify the bcrypt hash created during registration. */
 
-        const passwordResult = await pool.query(
-            `SELECT crypt($1, $2) = $2 AS password_match`,
-            [password, user.password_hash]
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user.password_hash
         );
-
-        const passwordMatch =
-            passwordResult.rows[0].password_match;
 
 
         if (!passwordMatch) {
@@ -227,6 +313,7 @@ async function getCurrentUser(req, res) {
 
 
 module.exports = {
+    registerStudent,
     loginUser,
     getCurrentUser
 };

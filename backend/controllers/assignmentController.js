@@ -236,6 +236,7 @@ async function getAssignmentsByProvider(
                 s.name AS service_name,
                 c.name AS category_name,
                 s.location,
+                s.working_hours,
                 s.status AS service_status,
                 s.availability AS service_availability,
                 p.availability AS provider_status,

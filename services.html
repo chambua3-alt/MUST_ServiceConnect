@@ -13,6 +13,7 @@
 <title>Services | MUST ServiceConnect</title>
 
 <link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="images/logo.png">
 
 
 </head>
@@ -110,6 +111,60 @@
     </p>
 
 </footer>
+
+
+<!-- Service Details Modal -->
+
+<div id="crud-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modal-title">Service Details</h2>
+
+            <button
+                type="button"
+                id="modal-close"
+                class="modal-close"
+                aria-label="Close service details">
+                &times;
+            </button>
+
+        </div>
+
+        <form id="modal-form" class="modal-form">
+
+            <div id="modal-fields"></div>
+
+            <div
+                id="modal-message"
+                class="modal-message">
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="modal-cancel"
+                    class="modal-btn modal-btn-cancel">
+                    Close
+                </button>
+
+                <button
+                    type="submit"
+                    id="modal-confirm"
+                    class="modal-btn modal-btn-confirm">
+                    Close
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
 
 
 <script src="js/script.js"></script>

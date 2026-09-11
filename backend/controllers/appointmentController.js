@@ -1,6 +1,152 @@
 const pool = require("../db");
 
 
+/* Choose the earliest free slot in the service working window. */
+
+function getWorkingSlotRange(workingHours) {
+
+    const match = String(workingHours || "")
+        .match(/(\d{1,2}:\d{2})\s*(?:-|to)\s*(\d{1,2}:\d{2})/i);
+
+    return {
+        start: match ? match[1] : "08:00",
+        end: match ? match[2] : "16:00"
+    };
+
+}
+
+
+function timeToMinutes(time) {
+
+    const parts = String(time).split(":");
+
+    return Number(parts[0]) * 60 + Number(parts[1]);
+
+}
+
+
+function minutesToTime(minutes) {
+
+    const hours = String(Math.floor(minutes / 60)).padStart(2, "0");
+    const remainder = String(minutes % 60).padStart(2, "0");
+
+    return `${hours}:${remainder}:00`;
+
+}
+
+
+async function allocateAppointmentTime(
+    serviceId,
+    providerId,
+    appointmentDate,
+    excludeAppointmentId = null
+) {
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(appointmentDate))) {
+        const error = new Error(
+            "Appointment date must use YYYY-MM-DD format."
+        );
+        error.status = 400;
+        throw error;
+    }
+
+    const today = new Date()
+        .toISOString()
+        .split("T")[0];
+
+    if (String(appointmentDate) < today) {
+        const error = new Error(
+            "Appointment date cannot be in the past."
+        );
+        error.status = 400;
+        throw error;
+    }
+
+    const serviceResult = await pool.query(
+        `
+        SELECT
+            s.working_hours
+        FROM services s
+        INNER JOIN provider_services ps
+            ON ps.service_id = s.id
+        INNER JOIN providers p
+            ON p.id = ps.provider_id
+        WHERE s.id = $1
+          AND ps.provider_id = $2
+          AND s.is_active = TRUE
+          AND p.is_active = TRUE
+          AND p.availability <> 'closed'
+        `,
+        [serviceId, providerId]
+    );
+
+    if (serviceResult.rows.length === 0) {
+        const error = new Error(
+            "The selected provider is not available for this service."
+        );
+        error.status = 400;
+        throw error;
+    }
+
+    const range = getWorkingSlotRange(
+        serviceResult.rows[0].working_hours
+    );
+
+    const start = timeToMinutes(range.start);
+    const end = timeToMinutes(range.end);
+
+    if (start >= end) {
+        const error = new Error("The service working hours are invalid.");
+        error.status = 409;
+        throw error;
+    }
+
+    const values = [providerId, appointmentDate];
+    let excludeSql = "";
+
+    if (excludeAppointmentId) {
+        values.push(excludeAppointmentId);
+        excludeSql = "AND id <> $3";
+    }
+
+    const bookedResult = await pool.query(
+        `
+        SELECT appointment_time
+        FROM appointments
+        WHERE provider_id = $1
+          AND appointment_date = $2
+          AND status NOT IN ('rejected', 'cancelled')
+          ${excludeSql}
+        `,
+        values
+    );
+
+    const bookedTimes = new Set(
+        bookedResult.rows.map(function (appointment) {
+            return String(appointment.appointment_time)
+                .slice(0, 5);
+        })
+    );
+
+    for (let minutes = start; minutes < end; minutes += 30) {
+
+        const slot = minutesToTime(minutes);
+
+        if (!bookedTimes.has(slot.slice(0, 5))) {
+            return slot;
+        }
+
+    }
+
+    const error = new Error(
+        "No appointment time is available for the selected service on that date."
+    );
+    error.status = 409;
+    throw error;
+
+}
+
+
 /* Create Appointment */
 
 async function createAppointment(req, res) {
@@ -15,7 +161,6 @@ async function createAppointment(req, res) {
             email,
             reason,
             appointment_date,
-            appointment_time
         } = req.body;
 
 
@@ -38,13 +183,12 @@ async function createAppointment(req, res) {
             !String(email).trim() ||
             !reason ||
             !String(reason).trim() ||
-            !appointment_date ||
-            !appointment_time
+            !appointment_date
         ) {
 
             return res.status(400).json({
                 message:
-                    "Service, provider, full name, phone, email, reason, appointment date and appointment time are required."
+                    "Service, provider, full name, phone, email, reason and appointment date are required."
             });
 
         }
@@ -139,6 +283,25 @@ async function createAppointment(req, res) {
         }
 
 
+        let appointmentTime;
+
+        try {
+
+            appointmentTime = await allocateAppointmentTime(
+                service_id,
+                provider_id,
+                appointment_date
+            );
+
+        } catch (error) {
+
+            return res.status(error.status || 409).json({
+                message: error.message
+            });
+
+        }
+
+
         /* Create Appointment */
 
         const result = await pool.query(
@@ -192,7 +355,7 @@ async function createAppointment(req, res) {
                 String(email).trim().toLowerCase(),
                 String(reason).trim(),
                 appointment_date,
-                appointment_time
+                appointmentTime
             ]
         );
 
@@ -685,75 +848,74 @@ async function updateAppointment(req, res) {
 
 
         const {
-            service_id,
-            provider_id,
-            full_name,
-            phone,
-            email,
             reason,
-            appointment_date,
-            appointment_time
+            appointment_date
         } = req.body;
 
 
         /* Validate Required Fields */
 
         if (
-            !service_id ||
-            !provider_id ||
-            !full_name ||
-            !String(full_name).trim() ||
-            !phone ||
-            !String(phone).trim() ||
-            !email ||
-            !String(email).trim() ||
             !reason ||
             !String(reason).trim() ||
-            !appointment_date ||
-            !appointment_time
+            !appointment_date
         ) {
 
             return res.status(400).json({
                 message:
-                    "Service, provider, full name, phone, email, reason, appointment date and appointment time are required."
+                    "Reason and appointment date are required."
             });
 
         }
 
 
-        /* Validate Provider-Service Assignment */
+        /* Load the student's pending appointment */
 
-        const assignmentResult = await pool.query(
+        const currentResult = await pool.query(
             `
             SELECT
-                ps.id
-            FROM provider_services ps
-
-            INNER JOIN providers p
-                ON p.id = ps.provider_id
-
-            INNER JOIN services s
-                ON s.id = ps.service_id
-
-            WHERE ps.provider_id = $1
-              AND ps.service_id = $2
-              AND p.is_active = TRUE
-              AND s.is_active = TRUE
+                service_id,
+                provider_id,
+                status
+            FROM appointments
+            WHERE id = $1
+              AND user_id = $2
             `,
             [
-                provider_id,
-                service_id
+                id,
+                req.user.userId
             ]
         );
 
 
         if (
-            assignmentResult.rows.length === 0
+            currentResult.rows.length === 0 ||
+            currentResult.rows[0].status !== "pending"
         ) {
 
-            return res.status(400).json({
+            return res.status(404).json({
                 message:
-                    "The selected provider is not assigned to the selected service."
+                    "Appointment not found, does not belong to you, or cannot be updated because it is no longer pending."
+            });
+
+        }
+
+
+        let appointmentTime;
+
+        try {
+
+            appointmentTime = await allocateAppointmentTime(
+                currentResult.rows[0].service_id,
+                currentResult.rows[0].provider_id,
+                appointment_date,
+                id
+            );
+
+        } catch (error) {
+
+            return res.status(error.status || 409).json({
+                message: error.message
             });
 
         }
@@ -765,17 +927,12 @@ async function updateAppointment(req, res) {
             `
             UPDATE appointments
             SET
-                service_id = $1,
-                provider_id = $2,
-                full_name = $3,
-                phone = $4,
-                email = $5,
-                reason = $6,
-                appointment_date = $7,
-                appointment_time = $8,
+                                reason = $1,
+                                appointment_date = $2,
+                                appointment_time = $3,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $9
-              AND user_id = $10
+                        WHERE id = $4
+                            AND user_id = $5
               AND status = 'pending'
             RETURNING
                 id,
@@ -794,14 +951,9 @@ async function updateAppointment(req, res) {
                 updated_at
             `,
             [
-                service_id,
-                provider_id,
-                String(full_name).trim(),
-                String(phone).trim(),
-                String(email).trim().toLowerCase(),
                 String(reason).trim(),
                 appointment_date,
-                appointment_time,
+                appointmentTime,
                 id,
                 req.user.userId
             ]
@@ -1030,10 +1182,10 @@ async function updateAppointmentStatus(
             `
             UPDATE appointments
             SET
-                status = $1,
+                status = $1::TEXT,
                 rejection_reason =
                     CASE
-                        WHEN $1 = 'rejected'
+                        WHEN $1::TEXT = 'rejected'
                             THEN $2
                         ELSE NULL
                     END,

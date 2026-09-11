@@ -272,6 +272,59 @@ async function getProviders(req, res) {
 
 }
 
+
+/* Get Active Providers Assigned To A Service */
+
+async function getServiceProviders(req, res) {
+
+    try {
+
+        const {
+            service_id
+        } = req.params;
+
+        const result = await pool.query(
+            `
+            SELECT DISTINCT
+                p.id,
+                p.provider_id,
+                u.full_name,
+                p.availability
+            FROM provider_services ps
+            INNER JOIN providers p
+                ON p.id = ps.provider_id
+            INNER JOIN users u
+                ON u.id = p.user_id
+            INNER JOIN services s
+                ON s.id = ps.service_id
+            WHERE ps.service_id = $1
+              AND p.is_active = TRUE
+              AND u.is_active = TRUE
+              AND s.is_active = TRUE
+              AND p.availability <> 'closed'
+            ORDER BY u.full_name ASC
+            `,
+            [service_id]
+        );
+
+        res.status(200).json(result.rows);
+
+    } catch (error) {
+
+        console.error(
+            "Get service providers error:",
+            error.message
+        );
+
+        res.status(500).json({
+            message:
+                "Failed to retrieve service providers."
+        });
+
+    }
+
+}
+
 /* Get One Provider */
 
 async function getProviderById(req, res) {
@@ -716,6 +769,7 @@ async function deleteProvider(req, res) {
 module.exports = {
     createProvider,
     getProviders,
+    getServiceProviders,
     getProviderById,
     updateProvider,
     updateProviderAvailability,

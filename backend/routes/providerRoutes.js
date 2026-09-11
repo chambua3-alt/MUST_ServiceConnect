@@ -3,6 +3,7 @@ const express = require("express");
 const {
     createProvider,
     getProviders,
+    getServiceProviders,
     getProviderById,
     updateProviderAvailability,
     updateProvider,
@@ -49,6 +50,14 @@ router.get(
         "admin"
     ),
     getProviders
+);
+
+
+/* Get Active Providers For Appointment Selection */
+
+router.get(
+    "/available/:service_id",
+    getServiceProviders
 );
 
 

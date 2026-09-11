@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+    getSystemReport,
     downloadAppointmentReportPDF,
     downloadAppointmentReportExcel,
 
@@ -157,6 +158,16 @@ router.get(
         "admin"
     ),
     downloadSystemReportPDF
+);
+
+
+router.get(
+    "/system",
+    authenticateToken,
+    authorizeRoles(
+        "admin"
+    ),
+    getSystemReport
 );
 
 

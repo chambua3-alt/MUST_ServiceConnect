@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+    registerStudent,
     loginUser,
     getCurrentUser
 } = require("../controllers/authController");
@@ -21,6 +22,14 @@ const router = express.Router();
 router.post(
     "/login",
     loginUser
+);
+
+
+/* Public Student Registration */
+
+router.post(
+    "/register",
+    registerStudent
 );
 
 

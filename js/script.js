@@ -537,19 +537,19 @@ function openServiceDetailsModal(service) {
                     )}
                 </p>
 
+                <p>
+                    <strong>Working Hours:</strong>
+                    ${escapeHtml(
+                        service.working_hours || "-"
+                    )}
+                </p>
+
             </div>
 
         `
 
     });
 
-
-    if (modalConfirm) {
-
-        modalConfirm.textContent =
-            "Close";
-
-    }
 
 }
 
@@ -812,7 +812,11 @@ async function loadAppointmentCategories() {
         `;
 
 
-        categories.forEach(
+        categories
+            .filter(function (category) {
+                return category.is_active !== false;
+            })
+            .forEach(
             function (category) {
 
                 const option =
@@ -1211,7 +1215,7 @@ async function loadAppointmentProviders() {
 
         const response =
             await fetch(
-                "/api/providers?service_id=" +
+                "/api/providers/available/" +
                 encodeURIComponent(serviceId)
             );
 
@@ -1408,6 +1412,15 @@ if (signupRole && providerFields) {
 const appointmentForm =
     document.getElementById("appointment-form");
 
+const appointmentDate =
+    document.getElementById("appointment-date");
+
+if (appointmentDate) {
+    appointmentDate.min = new Date()
+        .toISOString()
+        .split("T")[0];
+}
+
 /* Appointment Submission */
 
 const appointmentMessage =
@@ -1442,7 +1455,8 @@ if (appointmentForm && appointmentMessage) {
             email: formData.get("email"),
             service_id: Number(formData.get("service")),
             provider_id: Number(formData.get("service-provider")),
-            reason: formData.get("reason")
+            reason: formData.get("reason"),
+            appointment_date: formData.get("appointment_date")
         };
 
         try {
@@ -1480,7 +1494,7 @@ if (appointmentForm && appointmentMessage) {
                 </p>
 
                 <p>
-                    Your appointment has been scheduled for
+                    Your appointment has been assigned for
                     <strong>${data.appointment.appointment_date}</strong>
                     at
                     <strong>${data.appointment.appointment_time}</strong>.
@@ -1568,6 +1582,9 @@ function openCrudModal(options = {}) {
             ? "modal-btn-danger"
             : "modal-btn-confirm");
 
+    modalConfirm.style.display =
+        options.hideConfirm ? "none" : "inline-flex";
+
     modalMessage.style.display = "none";
     modalMessage.textContent = "";
 
@@ -1600,6 +1617,10 @@ function closeCrudModal() {
 
     if (modalFields) {
         modalFields.innerHTML = "";
+    }
+
+    if (modalConfirm) {
+        modalConfirm.style.display = "inline-flex";
     }
 
     if (modalMessage) {
@@ -1656,6 +1677,11 @@ if (modalForm) {
 
             event.preventDefault();
 
+            if (!currentCrudAction) {
+                closeCrudModal();
+                return;
+            }
+
             const formData =
                 new FormData(modalForm);
 
@@ -1677,9 +1703,46 @@ if (modalForm) {
 
                 let response;
 
-                /* Create Category */
+                /* Create User */
 
                 if (
+                    currentCrudAction ===
+                    "create-user"
+                ) {
+
+                    const userId = String(
+                        formData.get("user_id") || ""
+                    ).trim();
+
+                    if (!/^\d{14}$/.test(userId)) {
+                        throw new Error(
+                            "User ID must contain exactly 14 digits."
+                        );
+                    }
+
+                    response = await fetch(
+                        "/api/users",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": "Bearer " + token
+                            },
+                            body: JSON.stringify({
+                                user_id: userId,
+                                full_name: formData.get("full_name"),
+                                email: formData.get("email"),
+                                phone: formData.get("phone"),
+                                password: formData.get("password"),
+                                role: formData.get("role")
+                            })
+                        }
+                    );
+                }
+
+                /* Create Category */
+
+                else if (
                     currentCrudAction ===
                     "create-category"
                 ) {
@@ -1816,7 +1879,9 @@ if (modalForm) {
                                     phone:
                                         formData.get("phone"),
                                     role:
-                                        formData.get("role")
+                                        formData.get("role"),
+                                    is_active:
+                                        formData.get("status") === "active"
                                 })
                             }
                         );
@@ -2114,7 +2179,10 @@ else if (
 
                 body: JSON.stringify({
                     status:
-                        selectedStatus
+                        selectedStatus,
+
+                    rejection_reason:
+                        formData.get("rejection_reason") || null
                 })
             }
         );
@@ -2164,11 +2232,6 @@ else if (
                             appointment_date:
                                 formData.get(
                                     "appointment_date"
-                                ),
-
-                            appointment_time:
-                                formData.get(
-                                    "appointment_time"
                                 )
 
                         })
@@ -2203,12 +2266,18 @@ else if (
             "status"
         );
 
+    const workingHours =
+        formData.get(
+            "working_hours"
+        );
+
 
     if (
         !serviceName ||
         !categoryId ||
         !location ||
-        !status
+        !status ||
+        !workingHours
     ) {
 
         throw new Error(
@@ -2243,7 +2312,10 @@ else if (
                         location,
 
                     status:
-                        status
+                        status,
+
+                    working_hours:
+                        workingHours
 
                 })
             }
@@ -2297,6 +2369,11 @@ else if (
                     status:
                         formData.get(
                             "status"
+                        ),
+
+                    working_hours:
+                        formData.get(
+                            "working_hours"
                         )
 
                 })
@@ -2365,40 +2442,6 @@ else if (
                         )
 
                 })
-            }
-        );
-}
-
-                /* Remove Provider */
-
-else if (
-    currentCrudAction ===
-    "remove-provider"
-) {
-
-    const providerId =
-        formData.get(
-            "provider_id"
-        );
-
-    const serviceId =
-        formData.get(
-            "service_id"
-        );
-
-    response =
-        await fetch(
-            "/api/assignments/" +
-            providerId +
-            "/" +
-            serviceId,
-            {
-                method: "DELETE",
-
-                headers: {
-                    "Authorization":
-                        "Bearer " + token
-                }
             }
         );
 }
@@ -2482,6 +2525,112 @@ else if (
 
 
 /*ADMIN - USER MANAGEMENT*/
+
+
+/* Administrator Information */
+
+async function loadAdminInformation() {
+
+    const adminName = document.getElementById("admin-name");
+    const adminId = document.getElementById("admin-id");
+    const token = localStorage.getItem("token");
+
+    if (!adminName && !adminId) {
+        return;
+    }
+
+    if (!token) {
+        if (adminName) adminName.textContent = "Please login first";
+        if (adminId) adminId.textContent = "Please login first";
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/auth/me",
+            {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message || "Unable to load administrator information."
+            );
+        }
+
+        const user = data.user || data;
+
+        if (adminName) adminName.textContent = user.full_name || "-";
+        if (adminId) adminId.textContent = user.user_id || "-";
+
+    } catch (error) {
+
+        console.error("Admin information error:", error);
+        if (adminName) adminName.textContent = "Unable to load information";
+        if (adminId) adminId.textContent = "Unable to load information";
+    }
+
+}
+
+
+loadAdminInformation();
+
+
+/* Create User */
+
+const createUserButton = document.getElementById("create-user-btn");
+
+if (createUserButton) {
+
+    createUserButton.addEventListener("click", function () {
+
+        openCrudModal({
+            title: "Create User",
+            action: "create-user",
+            confirmText: "Create User",
+            fields: `
+                <div class="form-group">
+                    <label for="create-user-id">User ID</label>
+                    <input type="text" id="create-user-id" name="user_id"
+                        inputmode="numeric" pattern="[0-9]{14}" maxlength="14" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-user-name">Full Name</label>
+                    <input type="text" id="create-user-name" name="full_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-user-email">Email</label>
+                    <input type="email" id="create-user-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-user-phone">Phone</label>
+                    <input type="tel" id="create-user-phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="create-user-role">Role</label>
+                    <select id="create-user-role" name="role" required>
+                        <option value="">Select role</option>
+                        <option value="student">Student</option>
+                        <option value="provider">Service Provider</option>
+                        <option value="service_manager">Service Manager</option>
+                        <option value="appointment_officer">Appointment Officer</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="create-user-password">Temporary Password</label>
+                    <input type="password" id="create-user-password" name="password" minlength="6" required>
+                </div>
+            `
+        });
+    });
+
+}
 
 
 /* Edit User */
@@ -2601,6 +2750,32 @@ function openEditUserModal(user) {
                     <option value="admin"
                         ${user.role === "admin" ? "selected" : ""}>
                         Administrator
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="edit-user-status">
+                    Account Status
+                </label>
+
+                <select
+                    id="edit-user-status"
+                    name="status"
+                    required>
+
+                    <option value="active"
+                        ${user.is_active ? "selected" : ""}>
+                        Active
+                    </option>
+
+                    <option value="inactive"
+                        ${!user.is_active ? "selected" : ""}>
+                        Inactive
                     </option>
 
                 </select>
@@ -3061,6 +3236,55 @@ loadAdminCategories();
 /*ADMIN - SYSTEM REPORTS*/
 
 
+async function loadAdminSystemReport() {
+
+    const reportTable = document.getElementById("admin-reports");
+    const token = localStorage.getItem("token");
+
+    if (!reportTable || !token) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/reports/system",
+            {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+        const report = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                report.message || "Unable to load system report."
+            );
+        }
+
+        reportTable.innerHTML = `
+            <tr><td>Users Report</td><td>System users and account information.</td><td>${report.users.total_users}</td><td><span class="dashboard-status available">${report.users.active_users} active / ${report.users.inactive_users} inactive</span></td></tr>
+            <tr><td>Services Report</td><td>Service categories and available services.</td><td>${report.services.total_services}</td><td><span class="dashboard-status available">${report.services.active_services} active / ${report.services.inactive_services} inactive</span></td></tr>
+            <tr><td>Providers Report</td><td>Registered service providers.</td><td>${report.providers.total_providers}</td><td><span class="dashboard-status available">${report.providers.active_providers} active / ${report.providers.inactive_providers} inactive</span></td></tr>
+            <tr><td>Categories Report</td><td>Service categories in the system.</td><td>${report.categories.total_categories}</td><td><span class="dashboard-status available">${report.categories.active_categories} active / ${report.categories.inactive_categories} inactive</span></td></tr>
+            <tr><td>Appointments Report</td><td>Appointment requests and statuses.</td><td>${report.appointments.total_appointments}</td><td><span class="dashboard-status available">${report.appointments.pending_appointments} pending / ${report.appointments.approved_appointments} approved / ${report.appointments.completed_appointments} completed</span></td></tr>
+        `;
+
+    } catch (error) {
+
+        console.error("Admin system report error:", error);
+        reportTable.innerHTML = `
+            <tr><td colspan="4" style="text-align: center;">Unable to load system report</td></tr>
+        `;
+    }
+
+}
+
+
+loadAdminSystemReport();
+
+
 /* View System Reports */
 
 const viewReportsButton =
@@ -3079,6 +3303,8 @@ if (viewReportsButton) {
             if (!reportsTable) {
                 return;
             }
+
+            loadAdminSystemReport();
 
             reportsTable.scrollIntoView({
                 behavior: "smooth",
@@ -3293,6 +3519,203 @@ if (adminDownloadExcelButton) {
 /*PROVIDER DASHBOARD*/
 
 
+/* Provider Dashboard Data */
+
+const providerAppointmentsTable =
+    document.getElementById("provider-appointments");
+
+let currentProviderRecordId = null;
+let providerDashboardAppointments = [];
+
+
+function getStoredUser() {
+
+    try {
+        return JSON.parse(
+            localStorage.getItem("user") || "null"
+        );
+    } catch (error) {
+        return null;
+    }
+
+}
+
+
+function renderProviderAppointments(appointments) {
+
+    if (!providerAppointmentsTable) {
+        return;
+    }
+
+    providerAppointmentsTable.innerHTML = "";
+    providerDashboardAppointments = appointments || [];
+
+    if (!appointments || appointments.length === 0) {
+        providerAppointmentsTable.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center;">
+                    No appointment data available
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    appointments.forEach(function (appointment) {
+
+        const encodedAppointment = encodeURIComponent(
+            JSON.stringify(appointment)
+        );
+        const actions = [];
+
+        if (appointment.status === "pending") {
+            actions.push(`<button type="button" class="action-btn"
+                onclick='openProviderAppointmentStatusModal(JSON.parse(decodeURIComponent("${encodedAppointment}")), "approved")'>Approve</button>`);
+            actions.push(`<button type="button" class="action-btn"
+                onclick='openProviderAppointmentStatusModal(JSON.parse(decodeURIComponent("${encodedAppointment}")), "rejected")'>Reject</button>`);
+        }
+
+        if (appointment.status === "approved") {
+            actions.push(`<button type="button" class="action-btn"
+                onclick='openProviderAppointmentStatusModal(JSON.parse(decodeURIComponent("${encodedAppointment}")), "completed")'>Complete</button>`);
+        }
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${escapeHtml(appointment.student_name || "-")}</td>
+            <td>${escapeHtml(appointment.service_name || "-")}</td>
+            <td>${escapeHtml(appointment.reason || "-")}</td>
+            <td>${escapeHtml(appointment.appointment_date || "-")}</td>
+            <td>${escapeHtml(appointment.appointment_time ? String(appointment.appointment_time).slice(0, 5) : "-")}</td>
+            <td>
+                <span class="dashboard-status ${getAppointmentStatusClass(appointment.status)}">
+                    ${escapeHtml(appointment.status || "Pending")}
+                </span>
+            </td>
+            <td>${actions.length ? actions.join("") : "-"}</td>
+        `;
+
+        providerAppointmentsTable.appendChild(row);
+    });
+
+}
+
+
+async function loadProviderDashboard() {
+
+    if (!providerAppointmentsTable && !document.getElementById("provider-name")) {
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+    const user = getStoredUser();
+
+    if (!token || !user || !user.id) {
+        return;
+    }
+
+    try {
+
+        const headers = {
+            "Authorization": "Bearer " + token
+        };
+
+        const currentUserResponse = await fetch(
+            "/api/auth/me",
+            { headers: headers }
+        );
+        const currentUserData = await currentUserResponse.json();
+
+        if (!currentUserResponse.ok) {
+            throw new Error(
+                currentUserData.message || "Unable to load provider information."
+            );
+        }
+
+        const providerResponse = await fetch(
+            "/api/providers",
+            { headers: headers }
+        );
+        const providers = await providerResponse.json();
+
+        if (!providerResponse.ok || !providers.length) {
+            throw new Error("Provider account was not found.");
+        }
+
+        const provider = providers[0];
+        const providerId = provider.id;
+        currentProviderRecordId = providerId;
+
+        const assignmentResponse = await fetch(
+            "/api/assignments/provider/" + providerId,
+            { headers: headers }
+        );
+        const assignments = await assignmentResponse.json();
+
+        if (!assignmentResponse.ok) {
+            throw new Error("Unable to load assigned services.");
+        }
+
+        const appointmentResponse = await fetch(
+            "/api/appointments/provider/" + providerId,
+            { headers: headers }
+        );
+        const appointments = await appointmentResponse.json();
+
+        if (!appointmentResponse.ok) {
+            throw new Error("Unable to load provider appointments.");
+        }
+
+        const service = assignments[0] || {};
+        const userData = currentUserData.user || currentUserData;
+
+        document.getElementById("provider-name").textContent =
+            userData.full_name || provider.full_name || "-";
+        document.getElementById("provider-id").textContent =
+            provider.provider_id || "-";
+        document.getElementById("assigned-service").textContent =
+            assignments.length
+                ? assignments.map(function (item) { return item.service_name; }).join(", ")
+                : "No service assigned";
+        document.getElementById("provider-location").textContent =
+            service.location || "-";
+        document.getElementById("provider-working-hours").textContent =
+            service.working_hours || "-";
+
+        const currentStatus = document.getElementById("current-provider-status");
+        currentStatus.textContent = provider.availability || "Not set";
+        currentStatus.className =
+            "dashboard-status " + getServiceStatusClass(provider.availability);
+
+        const statusSelect = document.getElementById("provider-status");
+        if (statusSelect) {
+            statusSelect.value = provider.availability || "";
+        }
+
+        renderProviderAppointments(appointments);
+
+    } catch (error) {
+
+        console.error("Provider dashboard error:", error);
+
+        if (providerAppointmentsTable) {
+            providerAppointmentsTable.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center;">
+                        Unable to load provider appointments
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+}
+
+
+loadProviderDashboard();
+
+
 /* View Assigned Service */
 
 const viewAssignedServiceButton =
@@ -3460,22 +3883,34 @@ if (providerStatusForm) {
 
             try {
 
-                const user =
-                    JSON.parse(
-                        localStorage.getItem("user")
+                let providerRecordId = currentProviderRecordId;
+
+                if (!providerRecordId) {
+                    const providerResponse = await fetch(
+                        "/api/providers",
+                        {
+                            headers: {
+                                "Authorization":
+                                    "Bearer " + token
+                            }
+                        }
                     );
 
-                if (!user || !user.id) {
+                    const providers = await providerResponse.json();
 
-                    throw new Error(
-                        "Provider information not found."
-                    );
+                    if (!providerResponse.ok || !providers.length) {
+                        throw new Error(
+                            "Provider information not found."
+                        );
+                    }
+
+                    providerRecordId = providers[0].id;
                 }
 
                 const response =
                     await fetch(
                         "/api/providers/" +
-                        user.id +
+                        providerRecordId +
                         "/availability",
                         {
                             method: "PATCH",
@@ -3555,8 +3990,17 @@ if (providerStatusForm) {
 
 
 function openProviderAppointmentStatusModal(
-    appointment
+    appointment,
+    requestedStatus
 ) {
+
+    const status = requestedStatus || appointment.status;
+    const encodedStudent = escapeHtml(
+        appointment.student_name || appointment.student || "Student"
+    );
+    const encodedService = escapeHtml(
+        appointment.service_name || appointment.service || "Service"
+    );
 
     openCrudModal({
 
@@ -3582,7 +4026,7 @@ function openProviderAppointmentStatusModal(
 
                 <input
                     type="text"
-                    value="${appointment.student || "Student"}"
+                    value="${encodedStudent}"
                     readonly>
 
             </div>
@@ -3596,7 +4040,7 @@ function openProviderAppointmentStatusModal(
 
                 <input
                     type="text"
-                    value="${appointment.service || "Service"}"
+                    value="${encodedService}"
                     readonly>
 
             </div>
@@ -3618,23 +4062,17 @@ function openProviderAppointmentStatusModal(
                     </option>
 
                     <option value="approved"
-                        ${appointment.status === "approved"
-                            ? "selected"
-                            : ""}>
+                        ${status === "approved" ? "selected" : ""}>
                         Approved
                     </option>
 
                     <option value="rejected"
-                        ${appointment.status === "rejected"
-                            ? "selected"
-                            : ""}>
+                        ${status === "rejected" ? "selected" : ""}>
                         Rejected
                     </option>
 
                     <option value="completed"
-                        ${appointment.status === "completed"
-                            ? "selected"
-                            : ""}>
+                        ${status === "completed" ? "selected" : ""}>
                         Completed
                     </option>
 
@@ -3642,9 +4080,47 @@ function openProviderAppointmentStatusModal(
 
             </div>
 
+            <div class="form-group" id="provider-rejection-reason-group">
+
+                <label for="provider-rejection-reason">
+                    Rejection Reason
+                </label>
+
+                <textarea
+                    id="provider-rejection-reason"
+                    name="rejection_reason"
+                    rows="3"
+                    placeholder="Required when rejecting an appointment"></textarea>
+
+            </div>
+
         `
 
     });
+
+    const rejectionGroup = document.getElementById(
+        "provider-rejection-reason-group"
+    );
+    const statusSelect = document.getElementById(
+        "provider-appointment-status"
+    );
+
+    function updateRejectionVisibility() {
+        if (rejectionGroup && statusSelect) {
+            rejectionGroup.style.display =
+                statusSelect.value === "rejected"
+                    ? "grid"
+                    : "none";
+        }
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener(
+            "change",
+            updateRejectionVisibility
+        );
+        updateRejectionVisibility();
+    }
 
 }
 
@@ -3864,6 +4340,285 @@ const managerDownloadExcelButton =
     document.getElementById("manager-download-excel-btn");
 
 
+async function loadAssignmentOptions() {
+
+    const providerSelect = document.getElementById("assignment-provider");
+    const serviceSelect = document.getElementById("assignment-service");
+
+    if (!providerSelect || !serviceSelect) {
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+        const headers = {
+            "Authorization": "Bearer " + token
+        };
+
+        const [providersResponse, servicesResponse] = await Promise.all([
+            fetch("/api/providers", { headers: headers }),
+            fetch("/api/services", { headers: headers })
+        ]);
+
+        const providers = await providersResponse.json();
+        const services = await servicesResponse.json();
+
+        if (!providersResponse.ok || !servicesResponse.ok) {
+            throw new Error("Unable to load assignment options.");
+        }
+
+        providerSelect.innerHTML = `<option value="">Select provider</option>`;
+        providers.filter(function (provider) {
+            return provider.is_active !== false;
+        }).forEach(function (provider) {
+            const option = document.createElement("option");
+            option.value = provider.id;
+            option.textContent = provider.full_name +
+                " (" + provider.provider_id + ")";
+            providerSelect.appendChild(option);
+        });
+
+        serviceSelect.innerHTML = `<option value="">Select service</option>`;
+        services.filter(function (service) {
+            return service.is_active !== false;
+        }).forEach(function (service) {
+            const option = document.createElement("option");
+            option.value = service.id;
+            option.textContent = service.name;
+            serviceSelect.appendChild(option);
+        });
+
+    } catch (error) {
+
+        console.error("Assignment options error:", error);
+        providerSelect.innerHTML = `<option value="">Unable to load providers</option>`;
+        serviceSelect.innerHTML = `<option value="">Unable to load services</option>`;
+    }
+
+}
+
+
+/* Service Manager Dashboard Data */
+
+const managedServicesTable = document.getElementById(
+    "managed-services"
+);
+
+const assignedProvidersTable = document.getElementById(
+    "assigned-providers"
+);
+
+
+async function loadServiceManagerDashboard() {
+
+    if (!managedServicesTable && !assignedProvidersTable) {
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        return;
+    }
+
+    const headers = {
+        "Authorization": "Bearer " + token
+    };
+
+    try {
+
+        const userResponse = await fetch(
+            "/api/auth/me",
+            { headers: headers }
+        );
+        const userData = await userResponse.json();
+
+        if (!userResponse.ok) {
+            throw new Error(
+                userData.message || "Unable to load manager information."
+            );
+        }
+
+        const servicesResponse = await fetch(
+            "/api/services",
+            { headers: headers }
+        );
+        const services = await servicesResponse.json();
+
+        if (!servicesResponse.ok) {
+            throw new Error(
+                services.message || "Unable to load services."
+            );
+        }
+
+        const assignmentsResponse = await fetch(
+            "/api/assignments",
+            { headers: headers }
+        );
+        const assignments = await assignmentsResponse.json();
+
+        if (!assignmentsResponse.ok) {
+            throw new Error(
+                assignments.message || "Unable to load assignments."
+            );
+        }
+
+        const user = userData.user || userData;
+        const managerName = document.getElementById("manager-name");
+        const managerId = document.getElementById("manager-id");
+
+        if (managerName) {
+            managerName.textContent = user.full_name || "-";
+        }
+
+        if (managerId) {
+            managerId.textContent = user.user_id || "-";
+        }
+
+        renderManagedServices(services, assignments);
+        renderAssignedProviders(assignments);
+
+    } catch (error) {
+
+        console.error("Service manager dashboard error:", error);
+
+        if (managedServicesTable) {
+            managedServicesTable.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center;">
+                        Unable to load service data
+                    </td>
+                </tr>
+            `;
+        }
+
+        if (assignedProvidersTable) {
+            assignedProvidersTable.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center;">
+                        Unable to load assignment data
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+}
+
+
+function renderManagedServices(services, assignments) {
+
+    if (!managedServicesTable) {
+        return;
+    }
+
+    managedServicesTable.innerHTML = "";
+
+    if (!services.length) {
+        managedServicesTable.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center;">
+                    No service data available
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    services.forEach(function (service) {
+
+        const serviceAssignments = assignments.filter(function (assignment) {
+            return String(assignment.service_id) === String(service.id);
+        });
+
+        const providerNames = serviceAssignments.map(function (assignment) {
+            return assignment.provider_name;
+        }).filter(Boolean).join(", ") || "Unassigned";
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${escapeHtml(service.name || "-")}</td>
+            <td>${escapeHtml(service.category_name || "-")}</td>
+            <td>${escapeHtml(service.location || "-")}</td>
+            <td>
+                <span class="dashboard-status ${getServiceStatusClass(service.status)}">
+                    ${escapeHtml(service.status || "Unknown")}
+                </span>
+            </td>
+            <td>${escapeHtml(providerNames)}</td>
+            <td>
+                <button type="button" class="action-btn"
+                    onclick='openEditServiceModal(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(service))}")))'>
+                    Edit
+                </button>
+                <button type="button" class="action-btn"
+                    onclick='openDeleteServiceModal(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(service))}")))'>
+                    Deactivate
+                </button>
+            </td>
+        `;
+
+        managedServicesTable.appendChild(row);
+    });
+
+}
+
+
+function renderAssignedProviders(assignments) {
+
+    if (!assignedProvidersTable) {
+        return;
+    }
+
+    assignedProvidersTable.innerHTML = "";
+
+    if (!assignments.length) {
+        assignedProvidersTable.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center;">
+                    No provider assignment data available
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    assignments.forEach(function (assignment) {
+
+        const encodedAssignment = encodeURIComponent(
+            JSON.stringify(assignment)
+        );
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${escapeHtml(assignment.provider_name || "-")}</td>
+            <td>${escapeHtml(assignment.provider_code || "-")}</td>
+            <td>${escapeHtml(assignment.service_name || "-")}</td>
+            <td>
+                <span class="dashboard-status ${getServiceStatusClass(assignment.provider_status)}">
+                    ${escapeHtml(assignment.provider_status || "Unknown")}
+                </span>
+            </td>
+            <td>
+                <button type="button" class="action-btn"
+                    onclick='openRemoveProviderModal(JSON.parse(decodeURIComponent("${encodedAssignment}")))'>
+                    Remove
+                </button>
+            </td>
+        `;
+
+        assignedProvidersTable.appendChild(row);
+    });
+
+}
+
+
+loadServiceManagerDashboard();
+
+
 /* Create Service */
 
 if (createServiceButton) {
@@ -3924,6 +4679,19 @@ if (createServiceButton) {
                     >
 
 
+                    <label for="service-working-hours">
+                        Working Hours
+                    </label>
+
+                    <input
+                        type="text"
+                        id="service-working-hours"
+                        name="working_hours"
+                        placeholder="08:00 - 16:00"
+                        required
+                    >
+
+
                     <label for="service-status">
                         Status
                     </label>
@@ -3956,6 +4724,10 @@ if (createServiceButton) {
 
             });
 
+            loadServiceCategoryOptions(
+                document.getElementById("service-category")
+            );
+
         }
     );
 
@@ -3963,73 +4735,64 @@ if (createServiceButton) {
 
 /* Load Service Categories */
 
-const serviceCategorySelect =
-    document.getElementById(
-        "service-category"
-    );
+async function loadServiceCategoryOptions(select, selectedId) {
 
+    if (!select) {
+        return;
+    }
 
-if (serviceCategorySelect) {
+    select.innerHTML = `
+        <option value="">
+            Loading categories...
+        </option>
+    `;
 
-    fetch(
-        "/api/service-categories"
-    )
-        .then(function (response) {
+    try {
 
-            if (!response.ok) {
+        const response = await fetch(
+            "/api/service-categories"
+        );
 
-                throw new Error(
-                    "Failed to load service categories."
-                );
-            }
+        const categories = await response.json();
 
-            return response.json();
-
-        })
-        .then(function (categories) {
-
-            serviceCategorySelect.innerHTML = `
-                <option value="">
-                    Select category
-                </option>
-            `;
-
-            categories.forEach(
-                function (category) {
-
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    option.value =
-                        category.id;
-
-                    option.textContent =
-                        category.name;
-
-                    serviceCategorySelect.appendChild(
-                        option
-                    );
-
-                }
+        if (!response.ok) {
+            throw new Error(
+                categories.message ||
+                "Failed to load service categories."
             );
+        }
 
-        })
-        .catch(function (error) {
+        select.innerHTML = `
+            <option value="">
+                Select category
+            </option>
+        `;
 
-            console.error(
-                "Service category error:",
-                error
-            );
+        categories
+            .filter(function (category) {
+                return category.is_active !== false;
+            })
+            .forEach(function (category) {
 
-            serviceCategorySelect.innerHTML = `
-                <option value="">
-                    Unable to load categories
-                </option>
-            `;
+                const option = document.createElement("option");
 
-        });
+                option.value = category.id;
+                option.textContent = category.name;
+                option.selected = String(category.id) === String(selectedId);
+
+                select.appendChild(option);
+            });
+
+    } catch (error) {
+
+        console.error("Service category error:", error);
+
+        select.innerHTML = `
+            <option value="">
+                Unable to load categories
+            </option>
+        `;
+    }
 
 }
 
@@ -4077,18 +4840,6 @@ function openEditServiceModal(service) {
                 required
             >
 
-                <option value="lecturer">
-                    Lecturer Consultation
-                </option>
-
-                <option value="office">
-                    University Offices
-                </option>
-
-                <option value="important-service">
-                    Important Services
-                </option>
-
             </select>
 
 
@@ -4101,6 +4852,20 @@ function openEditServiceModal(service) {
                 id="edit-service-location"
                 name="location"
                 value="${service.location || ""}"
+                required
+            >
+
+
+            <label for="edit-service-working-hours">
+                Working Hours
+            </label>
+
+            <input
+                type="text"
+                id="edit-service-working-hours"
+                name="working_hours"
+                value="${service.working_hours || ""}"
+                placeholder="08:00 - 16:00"
                 required
             >
 
@@ -4136,6 +4901,11 @@ function openEditServiceModal(service) {
         `
 
     });
+
+    loadServiceCategoryOptions(
+        document.getElementById("edit-service-category"),
+        service.category_id
+    );
 
 }
 
@@ -4231,6 +5001,8 @@ if (assignProviderButton) {
 
             });
 
+            loadAssignmentOptions();
+
         }
     );
 
@@ -4256,31 +5028,17 @@ function openRemoveProviderModal(assignment) {
             <p>
                 Are you sure you want to remove
                 <strong>
-                    ${assignment.provider || "this provider"}
+                    ${assignment.provider_name || "this provider"}
                 </strong>
                 from
                 <strong>
-                    ${assignment.service || "this service"}
+                    ${assignment.service_name || "this service"}
                 </strong>?
             </p>
-
             <input
                 type="hidden"
-                name="provider_id"
-                value="${assignment.provider_id || ""}"
-            >
-
-            <input
-                type="hidden"
-                name="service_id"
-                value="${assignment.service_id || ""}"
-            >
-
-            <input
-    type="hidden"
-    name="assignment_id"
-    value="${assignment.id || ""}"
->
+                name="assignment_id"
+                value="${assignment.id || ""}">
 
         `
 
@@ -4479,6 +5237,80 @@ if (managerDownloadExcelButton) {
 /* Student Dashboard */
 
 
+/* Student Information */
+
+async function loadStudentInformation() {
+
+    const token = localStorage.getItem("token");
+    const studentName = document.getElementById("student-name");
+    const studentId = document.getElementById("student-id");
+    const studentEmail = document.getElementById("student-email");
+
+    if (!studentName && !studentId && !studentEmail) {
+        return;
+    }
+
+    if (!token) {
+        [studentName, studentId, studentEmail]
+            .filter(Boolean)
+            .forEach(function (element) {
+                element.textContent = "Please login first";
+            });
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/auth/me",
+            {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message || "Unable to load student information."
+            );
+        }
+
+        const user = data.user || data;
+
+        if (studentName) {
+            studentName.textContent = user.full_name || "-";
+        }
+
+        if (studentId) {
+            studentId.textContent = user.user_id || "-";
+        }
+
+        if (studentEmail) {
+            studentEmail.textContent = user.email || "-";
+        }
+
+        localStorage.setItem("user", JSON.stringify(user));
+
+    } catch (error) {
+
+        console.error("Student information error:", error);
+
+        [studentName, studentId, studentEmail]
+            .filter(Boolean)
+            .forEach(function (element) {
+                element.textContent = "Unable to load information";
+            });
+    }
+
+}
+
+
+loadStudentInformation();
+
+
 /* Student Appointments Table */
 
 const studentAppointments =
@@ -4497,7 +5329,7 @@ function renderStudentAppointments(appointments) {
 
         studentAppointments.innerHTML = `
             <tr>
-                <td colspan="5"
+                <td colspan="7"
                     style="text-align: center;">
                     No appointment data available
                 </td>
@@ -4513,46 +5345,71 @@ function renderStudentAppointments(appointments) {
         const row =
             document.createElement("tr");
 
+        const canEdit = appointment.status === "pending";
+        const canCancel = [
+            "pending",
+            "approved",
+            "rejected"
+        ].includes(appointment.status);
+
+        const encodedAppointment = encodeURIComponent(
+            JSON.stringify(appointment)
+        );
+
         row.innerHTML = `
 
             <td>
-                ${appointment.service_name || "-"}
+                ${escapeHtml(appointment.service_name || "-")}
             </td>
 
             <td>
-                ${appointment.provider_name || "-"}
+                ${escapeHtml(appointment.provider_name || "-")}
             </td>
 
             <td>
-                ${appointment.reason || "-"}
+                ${escapeHtml(appointment.reason || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(appointment.appointment_date || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    appointment.appointment_time
+                        ? String(appointment.appointment_time).slice(0, 5)
+                        : "-"
+                )}
             </td>
 
             <td>
                 <span class="dashboard-status ${getAppointmentStatusClass(appointment.status)}">
-                    ${appointment.status || "Pending"}
+                    ${escapeHtml(appointment.status || "Pending")}
                 </span>
             </td>
 
             <td>
 
-                <button
+                ${canEdit ? `<button
                     type="button"
                     class="action-btn"
-                    onclick='openStudentEditAppointmentModal(${JSON.stringify(appointment)})'>
+                    onclick='openStudentEditAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                     Edit
 
-                </button>
+                </button>` : ""}
 
 
-                <button
+                ${canCancel ? `<button
                     type="button"
                     class="action-btn"
-                    onclick='openStudentCancelAppointmentModal(${JSON.stringify(appointment)})'>
+                    onclick='openStudentCancelAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                     Cancel
 
-                </button>
+                </button>` : ""}
+
+                ${!canEdit && !canCancel ? "-" : ""}
 
             </td>
 
@@ -4575,16 +5432,21 @@ async function loadStudentAppointments() {
     const token =
         localStorage.getItem("token");
 
-    const user =
-        JSON.parse(
-            localStorage.getItem("user")
+    let user = null;
+
+    try {
+        user = JSON.parse(
+            localStorage.getItem("user") || "null"
         );
+    } catch (error) {
+        console.error("Invalid stored user data:", error);
+    }
 
     if (!token || !user || !user.id) {
 
         studentAppointments.innerHTML = `
             <tr>
-                <td colspan="5"
+                    <td colspan="7"
                     style="text-align: center;">
                     Please login first
                 </td>
@@ -4717,18 +5579,6 @@ function openStudentEditAppointmentModal(appointment) {
                 required
             >
 
-
-            <label for="student-edit-time">
-                Appointment Time
-            </label>
-
-            <input
-                type="time"
-                id="student-edit-time"
-                name="appointment_time"
-                value="${appointment.appointment_time || ""}"
-                required
-            >
 
         `
 
@@ -4974,6 +5824,58 @@ const officerAppointments =
     document.getElementById("officer-appointments");
 
 
+async function loadOfficerInformation() {
+
+    const token = localStorage.getItem("token");
+    const officerName = document.getElementById("officer-name");
+    const officerId = document.getElementById("officer-id");
+
+    if (!officerName && !officerId) {
+        return;
+    }
+
+    if (!token) {
+        if (officerName) officerName.textContent = "Please login first";
+        if (officerId) officerId.textContent = "Please login first";
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/auth/me",
+            {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message || "Unable to load officer information."
+            );
+        }
+
+        const user = data.user || data;
+
+        if (officerName) officerName.textContent = user.full_name || "-";
+        if (officerId) officerId.textContent = user.user_id || "-";
+
+    } catch (error) {
+
+        console.error("Officer information error:", error);
+        if (officerName) officerName.textContent = "Unable to load information";
+        if (officerId) officerId.textContent = "Unable to load information";
+    }
+
+}
+
+
+loadOfficerInformation();
+
+
 function renderOfficerAppointments(appointments) {
 
     if (!officerAppointments) {
@@ -4987,7 +5889,7 @@ function renderOfficerAppointments(appointments) {
 
         officerAppointments.innerHTML = `
             <tr>
-                <td colspan="6"
+                <td colspan="8"
                     style="text-align: center;">
 
                     No appointment data available
@@ -5009,22 +5911,34 @@ function renderOfficerAppointments(appointments) {
         row.innerHTML = `
 
             <td>
-                ${appointment.student_name || "-"}
+                ${escapeHtml(appointment.student_name || "-")}
             </td>
 
 
             <td>
-                ${appointment.service_name || "-"}
+                ${escapeHtml(appointment.service_name || "-")}
             </td>
 
 
             <td>
-                ${appointment.provider_name || "-"}
+                ${escapeHtml(appointment.provider_name || "-")}
             </td>
 
 
             <td>
-                ${appointment.reason || "-"}
+                ${escapeHtml(appointment.reason || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(appointment.appointment_date || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    appointment.appointment_time
+                        ? String(appointment.appointment_time).slice(0, 5)
+                        : "-"
+                )}
             </td>
 
 
@@ -5032,7 +5946,7 @@ function renderOfficerAppointments(appointments) {
 
                 <span class="dashboard-status ${getOfficerAppointmentStatusClass(appointment.status)}">
 
-                    ${appointment.status || "pending"}
+                    ${escapeHtml(appointment.status || "pending")}
 
                 </span>
 
@@ -5069,7 +5983,7 @@ async function loadOfficerAppointments() {
 
         officerAppointments.innerHTML = `
             <tr>
-                <td colspan="6"
+                <td colspan="8"
                     style="text-align: center;">
                     Please login first
                 </td>
@@ -5118,7 +6032,7 @@ async function loadOfficerAppointments() {
 
         officerAppointments.innerHTML = `
             <tr>
-                <td colspan="6"
+                <td colspan="8"
                     style="text-align: center;">
                     Unable to load appointments
                 </td>
@@ -5128,6 +6042,9 @@ async function loadOfficerAppointments() {
     }
 
 }
+
+
+loadOfficerAppointments();
 
 
 /* Appointment Status Class */
@@ -5163,6 +6080,10 @@ function getOfficerAppointmentActions(appointment) {
     const status =
         appointment.status || "pending";
 
+    const encodedAppointment = encodeURIComponent(
+        JSON.stringify(appointment)
+    );
+
 
     if (status === "pending") {
 
@@ -5171,7 +6092,7 @@ function getOfficerAppointmentActions(appointment) {
             <button
                 type="button"
                 class="action-btn"
-                onclick='openApproveAppointmentModal(${JSON.stringify(appointment)})'>
+                onclick='openApproveAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                 Approve
 
@@ -5181,7 +6102,7 @@ function getOfficerAppointmentActions(appointment) {
             <button
                 type="button"
                 class="action-btn"
-                onclick='openRejectAppointmentModal(${JSON.stringify(appointment)})'>
+                onclick='openRejectAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                 Reject
 
@@ -5199,7 +6120,7 @@ function getOfficerAppointmentActions(appointment) {
             <button
                 type="button"
                 class="action-btn"
-                onclick='openCompleteAppointmentModal(${JSON.stringify(appointment)})'>
+                onclick='openCompleteAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                 Complete
 
@@ -5209,7 +6130,7 @@ function getOfficerAppointmentActions(appointment) {
             <button
                 type="button"
                 class="action-btn"
-                onclick='openCancelOfficerAppointmentModal(${JSON.stringify(appointment)})'>
+                onclick='openCancelOfficerAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                 Cancel
 
@@ -5227,7 +6148,7 @@ function getOfficerAppointmentActions(appointment) {
             <button
                 type="button"
                 class="action-btn"
-                onclick='openCancelOfficerAppointmentModal(${JSON.stringify(appointment)})'>
+                onclick='openCancelOfficerAppointmentModal(JSON.parse(decodeURIComponent("${encodedAppointment}")))'>
 
                 Cancel
 
@@ -5523,9 +6444,53 @@ if (officerDownloadPdfButton) {
 
     officerDownloadPdfButton.addEventListener(
         "click",
-        function () {
+        async function () {
 
-            
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                alert("Please login first.");
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    "/api/reports/appointments/pdf",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    const data = await response.json().catch(function () {
+                        return {};
+                    });
+                    throw new Error(
+                        data.message || "Failed to generate PDF report."
+                    );
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+
+                link.href = url;
+                link.download =
+                    "MUST_ServiceConnect_Appointment_Report.pdf";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+
+                console.error("Officer PDF error:", error);
+                alert(error.message || "Unable to download PDF report.");
+            }
 
         }
     );
@@ -5625,6 +6590,104 @@ if (officerDownloadExcelButton) {
     );
 
 }
+
+/* Student Signup */
+
+const signupForm = document.getElementById("signup-form");
+
+if (signupForm) {
+
+    signupForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const formData = new FormData(signupForm);
+            const studentId = String(
+                formData.get("student-id") || ""
+            ).trim();
+            const password = String(
+                formData.get("password") || ""
+            );
+            const confirmPassword = String(
+                formData.get("confirm-password") || ""
+            );
+
+            if (!/^\d{14}$/.test(studentId)) {
+                alert("Student ID must contain exactly 14 digits.");
+                return;
+            }
+
+            if (password.length < 6) {
+                alert("Password must contain at least 6 characters.");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match.");
+                return;
+            }
+
+            const submitButton = signupForm.querySelector(
+                "button[type='submit']"
+            );
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Creating Account...";
+            }
+
+            try {
+
+                const response = await fetch(
+                    "/api/auth/register",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            user_id: studentId,
+                            full_name: formData.get("fullname"),
+                            email: formData.get("email"),
+                            phone: formData.get("phone"),
+                            password: password
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "Unable to create account."
+                    );
+                }
+
+                alert(
+                    "Account created successfully. Please log in."
+                );
+                window.location.href = "login.html";
+
+            } catch (error) {
+
+                console.error("Signup error:", error);
+                alert(error.message || "Unable to create account.");
+
+            } finally {
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Create Account";
+                }
+            }
+
+        }
+    );
+
+}
+
 
 /* Login */
 
